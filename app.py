@@ -96,20 +96,28 @@ def main():
         df = pd.DataFrame(data)
         st.dataframe(df)
 
-        # Filter Reading data for visualization
-        reading_df = df[df["skill"] == "Reading"]
-        if not reading_df.empty:
-            st.header("Reading Band Scores Visualization")
+        st.sidebar.header("Visualization Options")
+        visualize_skill = st.sidebar.selectbox("Select Skill to Visualize", ["Listening", "Reading"])
+
+        # Filter data based on user's choice
+        filtered_df = df[df["skill"] == visualize_skill]
+        if not filtered_df.empty:
+            st.header(f"{visualize_skill} Band Scores Visualization")
             plt.figure(figsize=(10, 6))
-            plt.bar(reading_df["name"], reading_df["band_score"], color='skyblue')
+            plt.bar(filtered_df["name"], filtered_df["band_score"], color='skyblue')
             plt.xlabel("User Name")
             plt.ylabel("Band Score")
-            plt.title("Reading Band Scores")
+            plt.title(f"{visualize_skill} Band Scores")
             plt.ylim(0, 9.5)
             plt.xticks(rotation=45)
+
+            # Annotate bars with band scores
+            for index, value in enumerate(filtered_df["band_score"]):
+                plt.text(index, value + 0.1, str(value), ha='center')
+
             st.pyplot(plt)
         else:
-            st.info("No Reading data to display.")
+            st.info(f"No {visualize_skill} data to display.")
     else:
         st.info("No data available. Please submit user data.")
 
