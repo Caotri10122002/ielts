@@ -43,7 +43,16 @@ DATA_FILE = "ielts_data.json"
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
-            return json.load(f)
+            try:
+                data = json.load(f)
+                # Ensure all entries have a timestamp
+                for entry in data:
+                    if "timestamp" not in entry:
+                        entry["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                return data
+            except json.JSONDecodeError:
+                st.error("📛 JSON file is corrupted. Please check the file format.")
+                return []
     else:
         return []
 
@@ -97,8 +106,18 @@ def main():
     data = load_data()
     if data:
         df = pd.DataFrame(data)
+        if 'timestamp' not in df.columns:
+            st.error("📛 'timestamp' column is missing in the data.")
+            st.stop()
+
         # Convert timestamp to datetime for sorting
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+
+        # Handle any rows where timestamp conversion failed
+        if df['timestamp'].isnull().any():
+            st.warning("⚠️ Some entries have invalid timestamps and will be ignored in visualizations.")
+            df = df.dropna(subset=['timestamp'])
+
         # Sort data by timestamp
         df = df.sort_values(by='timestamp')
         st.dataframe(df)
