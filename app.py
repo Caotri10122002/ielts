@@ -45,10 +45,12 @@ def load_data():
         with open(DATA_FILE, "r") as f:
             try:
                 data = json.load(f)
-                # Ensure all entries have a timestamp
+                # Ensure all entries have a timestamp and note
                 for entry in data:
                     if "timestamp" not in entry:
                         entry["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if "note" not in entry:
+                        entry["note"] = ""
                 return data
             except json.JSONDecodeError:
                 st.error("📛 JSON file is corrupted. Please check the file format.")
@@ -77,6 +79,7 @@ def main():
     name = st.sidebar.text_input("👤 Enter your name", "")
     skill = st.sidebar.selectbox("📚 Select Skill", ["Listening", "Reading"])
     correct_answers = st.sidebar.number_input("✅ Number of Correct Answers", min_value=0, max_value=40, step=1)
+    note = st.sidebar.text_area("📝 Note (optional)", "")
 
     if st.sidebar.button("📥 Submit"):
         if not name.strip():
@@ -86,13 +89,14 @@ def main():
             if band_score is not None:
                 # Load existing data
                 data = load_data()
-                # Append new entry with timestamp
+                # Append new entry with timestamp and note
                 data.append({
                     "name": name.strip(),
                     "skill": skill,
                     "correct_answers": correct_answers,
                     "band_score": band_score,
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "note": note.strip()
                 })
                 # Save data
                 save_data(data)
@@ -106,8 +110,8 @@ def main():
     data = load_data()
     if data:
         df = pd.DataFrame(data)
-        if 'timestamp' not in df.columns:
-            st.error("📛 'timestamp' column is missing in the data.")
+        if 'timestamp' not in df.columns or 'note' not in df.columns:
+            st.error("📛 'timestamp' or 'note' column is missing in the data.")
             st.stop()
 
         # Convert timestamp to datetime for sorting
